@@ -1,12 +1,11 @@
 import os
 from glob import glob
 from dataclasses import dataclass, field
-from dataclasses_json import dataclass_json
+from dataclasses_json import DataClassJsonMixin
 
 
 @dataclass
-@dataclass_json
-class ClassificationTrainArguments:
+class ClassificationTrainArguments(DataClassJsonMixin):
 
     pretrained_model_name: str = field(
         default="beomi/kcbert-base",
