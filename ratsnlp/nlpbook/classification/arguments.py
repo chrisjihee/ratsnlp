@@ -1,9 +1,11 @@
 import os
 from glob import glob
 from dataclasses import dataclass, field
+from dataclass_json import dataclass_json
 
 
 @dataclass
+@dataclass_json
 class ClassificationTrainArguments:
 
     pretrained_model_name: str = field(

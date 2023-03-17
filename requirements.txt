@@ -1,3 +1,5 @@
+dataclasses
+dataclasses-json
 lightning
 transformers
 Korpora
