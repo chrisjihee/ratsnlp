@@ -1,7 +1,7 @@
 import os
 from glob import glob
 from dataclasses import dataclass, field
-from dataclass_json import dataclass_json
+from dataclasses_json import dataclass_json
 
 
 @dataclass
