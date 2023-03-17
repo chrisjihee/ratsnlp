@@ -210,7 +210,7 @@ def download_pretrained_model(args, config_only=False):
         raise ValueError(f"not valid model name({pretrained_model_name}), cannot download resources")
 
 
-def set_logger(args):
+def set_logger():
     import torch
     if torch.cuda.is_available():
         stream_handler = logging.StreamHandler()
@@ -220,7 +220,6 @@ def set_logger(args):
         stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
     logger.setLevel(logging.INFO)
-    logger.info("Training/evaluation parameters %s", args)
 
 
 def set_seed(args):
