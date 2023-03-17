@@ -27,6 +27,10 @@ class ClassificationTrainArguments(DataClassJsonMixin):
         default=None,
         metadata={"help": "The output model dir."}
     )
+    downstream_model_filename: str = field(
+        default=None,
+        metadata={"help": "The output model filename."}
+    )
     max_seq_length: int = field(
         default=128,
         metadata={
@@ -77,10 +81,6 @@ class ClassificationTrainArguments(DataClassJsonMixin):
     fp16: bool = field(
         default=False,
         metadata={"help": "Enable train on FP16"}
-    )
-    tpu_cores: int = field(
-        default=0,
-        metadata={"help": "Enable TPU with 1 core or 8 cores"}
     )
 
 

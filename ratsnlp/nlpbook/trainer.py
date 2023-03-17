@@ -3,16 +3,18 @@ import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 
+from ratsnlp.nlpbook.classification import ClassificationTrainArguments
 
-def get_trainer(args, return_trainer_only=True):
+
+def get_trainer(args: ClassificationTrainArguments, return_trainer_only=True):
     ckpt_path = os.path.abspath(args.downstream_model_dir)
     os.makedirs(ckpt_path, exist_ok=True)
     checkpoint_callback = ModelCheckpoint(
         dirpath=ckpt_path,
+        filename=args.downstream_model_filename,
         save_top_k=args.save_top_k,
         monitor=args.monitor.split()[1],
         mode=args.monitor.split()[0],
-        filename='{epoch}-{val_loss:.2f}',
     )
     trainer = Trainer(
         max_epochs=args.epochs,
@@ -24,8 +26,6 @@ def get_trainer(args, return_trainer_only=True):
         deterministic=torch.cuda.is_available() and args.seed is not None,
         devices=torch.cuda.device_count() if torch.cuda.is_available() else None,
         precision=16 if args.fp16 else 32,
-        # For TPU Setup
-        # tpu_cores=args.tpu_cores if args.tpu_cores else None,
     )
     if return_trainer_only:
         return trainer
