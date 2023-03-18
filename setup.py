@@ -14,7 +14,7 @@ setuptools.setup(
     author="ratsgo",
     author_email="ratsgo@naver.com",
     description="tools for Natural Language Processing",
-    long_description=open('README.md').read(),
+    long_description=open('README.md', encoding='utf-8').read(),
     url="https://github.com/ratsgo/ratsnlp",
     packages=setuptools.find_packages(),
     include_package_data=True,
