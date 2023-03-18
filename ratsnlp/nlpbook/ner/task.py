@@ -1,9 +1,10 @@
-from transformers.optimization import AdamW
-from ratsnlp.nlpbook.metrics import accuracy
-from pytorch_lightning import LightningModule
-from transformers import BertPreTrainedModel
-from ratsnlp.nlpbook.ner import NERTrainArguments, NER_PAD_ID
+from torch.optim import AdamW
 from torch.optim.lr_scheduler import ExponentialLR
+
+from lightning import LightningModule
+from ratsnlp.nlpbook.metrics import accuracy
+from ratsnlp.nlpbook.ner import NERTrainArguments, NER_PAD_ID
+from transformers import BertPreTrainedModel
 
 
 class NERTask(LightningModule):

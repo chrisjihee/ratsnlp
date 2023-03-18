@@ -1,8 +1,9 @@
 import os
-import torch
-from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import ModelCheckpoint
 
+import torch
+
+from lightning import Trainer
+from lightning.pytorch.callbacks import ModelCheckpoint
 from ratsnlp.nlpbook.classification import ClassificationTrainArguments
 
 
