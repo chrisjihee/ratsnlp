@@ -165,9 +165,9 @@ def web_download(url,
 
 
 def download_downstream_dataset(args):
-    data_name = args.downstream_corpus_name.lower()
+    data_name = args.downstream_data_name.lower()
     if data_name in REMOTE_DATA_MAP.keys():
-        cache_dir = os.path.join(args.downstream_corpus_root_dir, data_name)
+        cache_dir = os.path.join(args.downstream_data_home, data_name)
         for value in REMOTE_DATA_MAP[data_name].values():
             if "web_url" in value.keys():
                 web_download(
@@ -188,7 +188,7 @@ def download_downstream_dataset(args):
 
 
 def download_pretrained_model(args, config_only=False):
-    pretrained_model_name = args.pretrained_model_name.lower()
+    pretrained_model_name = args.pretrained_model_path.lower()
     if pretrained_model_name in REMOTE_MODEL_MAP.keys():
         for key, value in REMOTE_MODEL_MAP[pretrained_model_name].items():
             if not config_only or (config_only and key == "config"):

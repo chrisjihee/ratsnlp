@@ -7,11 +7,11 @@ from ratsnlp.nlpbook.classification import ClassificationTrainArguments
 
 
 def get_trainer(args: ClassificationTrainArguments, return_trainer_only=True):
-    ckpt_path = os.path.abspath(args.downstream_model_dir)
+    ckpt_path = os.path.abspath(args.downstream_model_path)
     os.makedirs(ckpt_path, exist_ok=True)
     checkpoint_callback = ModelCheckpoint(
         dirpath=ckpt_path,
-        filename=args.downstream_model_filename,
+        filename=args.downstream_model_file,
         save_top_k=args.save_top_k,
         monitor=args.monitor.split()[1],
         mode=args.monitor.split()[0],

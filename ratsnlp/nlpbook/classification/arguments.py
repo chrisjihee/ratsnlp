@@ -6,41 +6,38 @@ from dataclasses_json import DataClassJsonMixin
 
 @dataclass
 class ClassificationTrainArguments(DataClassJsonMixin):
-
-    pretrained_model_name: str = field(
+    pretrained_model_path: str = field(
         default="beomi/kcbert-base",
-        metadata={"help": "pretrained model name"}
+        metadata={"help": "name/path of the pretrained model"}
+    )
+    downstream_model_path: str = field(
+        default=None,
+        metadata={"help": "output model directory path"}
+    )
+    downstream_model_file: str = field(
+        default=None,
+        metadata={"help": "output model filename format"}
+    )
+    downstream_data_home: str = field(
+        default="/content/Korpora",
+        metadata={"help": "root of the downstream data"}
+    )
+    downstream_data_name: str = field(
+        default=None,
+        metadata={"help": "name of the downstream data"}
     )
     downstream_task_name: str = field(
         default="document-classification",
-        metadata={"help": "The name of the downstream data."}
-    )
-    downstream_corpus_name: str = field(
-        default=None,
-        metadata={"help": "The name of the downstream data."}
-    )
-    downstream_corpus_root_dir: str = field(
-        default="/content/Korpora",
-        metadata={"help": "The root directory of the downstream data."}
-    )
-    downstream_model_dir: str = field(
-        default=None,
-        metadata={"help": "The output model dir."}
-    )
-    downstream_model_filename: str = field(
-        default=None,
-        metadata={"help": "The output model filename."}
+        metadata={"help": "name of the downstream task"}
     )
     max_seq_length: int = field(
         default=128,
-        metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
-                    "than this will be truncated, sequences shorter will be padded."
-        }
+        metadata={"help": "The maximum total input sequence length after tokenization. "
+                          "Sequences longer than this will be truncated, sequences shorter will be padded."}
     )
     save_top_k: int = field(
         default=1,
-        metadata={"help": "save top k model checkpoints."}
+        metadata={"help": "save top k model checkpoints"}
     )
     monitor: str = field(
         default="min val_loss",
@@ -48,19 +45,19 @@ class ClassificationTrainArguments(DataClassJsonMixin):
     )
     seed: int = field(
         default=None,
-        metadata={"help": "random seed."}
+        metadata={"help": "random seed"}
     )
     overwrite_cache: bool = field(
         default=False,
-        metadata={"help": "Overwrite the cached training and evaluation sets"}
+        metadata={"help": "overwrite the cached training and evaluation sets"}
     )
     force_download: bool = field(
         default=False,
-        metadata={"help": "force to download downstream data and pretrained models."}
+        metadata={"help": "force to download downstream data and pretrained models"}
     )
     test_mode: bool = field(
         default=False,
-        metadata={"help": "Test Mode enables `fast_dev_run`"}
+        metadata={"help": "test mode enables `fast_dev_run`"}
     )
     learning_rate: float = field(
         default=5e-5,
@@ -72,7 +69,7 @@ class ClassificationTrainArguments(DataClassJsonMixin):
     )
     batch_size: int = field(
         default=32,
-        metadata={"help": "batch size. if 0, Let PyTorch Lightening find the best batch size"}
+        metadata={"help": "batch size. if 0, let lightening find the best batch size"}
     )
     cpu_workers: int = field(
         default=os.cpu_count(),
@@ -80,7 +77,7 @@ class ClassificationTrainArguments(DataClassJsonMixin):
     )
     fp16: bool = field(
         default=False,
-        metadata={"help": "Enable train on FP16"}
+        metadata={"help": "enable train on floating point 16"}
     )
 
 

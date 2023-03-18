@@ -115,13 +115,13 @@ class ClassificationDataset(Dataset):
             raise KeyError(f"mode({mode}) is not a valid split name")
         # Load data features from cache or dataset file
         cached_features_file = os.path.join(
-            args.downstream_corpus_root_dir,
-            args.downstream_corpus_name,
+            args.downstream_data_home,
+            args.downstream_data_name,
             "cached_{}_{}_{}_{}_{}".format(
                 mode,
                 tokenizer.__class__.__name__,
                 str(args.max_seq_length),
-                args.downstream_corpus_name,
+                args.downstream_data_name,
                 args.downstream_task_name,
             ),
         )
@@ -139,8 +139,8 @@ class ClassificationDataset(Dataset):
                 )
             else:
                 corpus_path = os.path.join(
-                    args.downstream_corpus_root_dir,
-                    args.downstream_corpus_name,
+                    args.downstream_data_home,
+                    args.downstream_data_name,
                 )
                 logger.info(f"Creating features from dataset file at {corpus_path}")
                 examples = self.corpus.get_examples(corpus_path, mode)
