@@ -1,7 +1,11 @@
 import os
 from glob import glob
 from dataclasses import dataclass, field
+from pathlib import Path
+
 from dataclasses_json import DataClassJsonMixin
+
+from chrisbase.io import make_dir
 
 
 @dataclass
@@ -17,6 +21,10 @@ class ClassificationTrainArguments(DataClassJsonMixin):
     downstream_model_file: str = field(
         default=None,
         metadata={"help": "output model filename format"}
+    )
+    downstream_conf_file: str = field(
+        default=None,
+        metadata={"help": "downstream config filename"}
     )
     downstream_data_home: str = field(
         default="/content/Korpora",
@@ -79,6 +87,11 @@ class ClassificationTrainArguments(DataClassJsonMixin):
         default=False,
         metadata={"help": "enable train on floating point 16"}
     )
+
+    def save_config(self) -> Path:
+        config_file = make_dir(self.downstream_model_path) / self.downstream_conf_file
+        config_file.write_text(self.to_json(ensure_ascii=False, indent=2, default=str))
+        return config_file
 
 
 @dataclass
