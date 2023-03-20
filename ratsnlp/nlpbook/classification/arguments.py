@@ -1,36 +1,35 @@
 import os
-from glob import glob
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from dataclasses_json import DataClassJsonMixin
 
-from chrisbase.io import make_dir
+from chrisbase.io import make_dir, files
 
 
 @dataclass
 class ClassificationTrainArguments(DataClassJsonMixin):
-    pretrained_model_path: str = field(
-        default="beomi/kcbert-base",
-        metadata={"help": "name/path of the pretrained model"}
-    )
-    downstream_model_path: str = field(
-        default=None,
-        metadata={"help": "output model directory path"}
-    )
-    downstream_model_file: str = field(
-        default=None,
-        metadata={"help": "output model filename format"}
-    )
-    downstream_conf_file: str = field(
+    working_config_file: str | None = field(
         default=None,
         metadata={"help": "downstream config filename"}
     )
-    downstream_data_home: str = field(
+    pretrained_model_path: str | None = field(
+        default="beomi/kcbert-base",
+        metadata={"help": "name/path of the pretrained model"}
+    )
+    downstream_model_path: str | None = field(
+        default=None,
+        metadata={"help": "output model directory path"}
+    )
+    downstream_model_file: str | None = field(
+        default=None,
+        metadata={"help": "output model filename format"}
+    )
+    downstream_data_home: str | None = field(
         default="/content/Korpora",
         metadata={"help": "root of the downstream data"}
     )
-    downstream_data_name: str = field(
+    downstream_data_name: str | None = field(
         default=None,
         metadata={"help": "name of the downstream data"}
     )
@@ -51,7 +50,7 @@ class ClassificationTrainArguments(DataClassJsonMixin):
         default="min val_loss",
         metadata={"help": "monitor condition (save top k)"}
     )
-    seed: int = field(
+    seed: int | None = field(
         default=None,
         metadata={"help": "random seed"}
     )
@@ -88,42 +87,45 @@ class ClassificationTrainArguments(DataClassJsonMixin):
         metadata={"help": "enable train on floating point 16"}
     )
 
-    def save_config(self) -> Path:
-        config_file = make_dir(self.downstream_model_path) / self.downstream_conf_file
+    def save_working_config(self) -> Path:
+        config_file = make_dir(self.downstream_model_path) / self.working_config_file
         config_file.write_text(self.to_json(ensure_ascii=False, indent=2, default=str))
         return config_file
 
 
 @dataclass
-class ClassificationDeployArguments:
+class ClassificationDeployArguments(DataClassJsonMixin):
+    working_config_file: str | None = field(
+        default=None,
+        metadata={"help": "downstream config filename"}
+    )
+    pretrained_model_path: str | None = field(
+        default="beomi/kcbert-base",
+        metadata={"help": "name/path of the pretrained model"}
+    )
+    downstream_model_path: str | None = field(
+        default=None,
+        metadata={"help": "output model directory path"}
+    )
+    downstream_model_file: str | None = field(
+        default=None,
+        metadata={"help": "output model filename"}
+    )
+    max_seq_length: int = field(
+        default=128,
+        metadata={"help": "The maximum total input sequence length after tokenization. "
+                          "Sequences longer than this will be truncated, sequences shorter will be padded."}
+    )
 
-    def __init__(
-            self,
-            pretrained_model_name=None,
-            downstream_model_dir=None,
-            downstream_model_checkpoint_fpath=None,
-            max_seq_length=128,
-    ):
-        self.pretrained_model_name = pretrained_model_name
-        self.max_seq_length = max_seq_length
-        if downstream_model_checkpoint_fpath is not None:
-            self.downstream_model_checkpoint_fpath = downstream_model_checkpoint_fpath
-        elif downstream_model_dir is not None:
-            ckpt_file_names = glob(os.path.join(downstream_model_dir, "*.ckpt"))
-            ckpt_file_names = [el for el in ckpt_file_names if "temp" not in el and "tmp" not in el]
-            if len(ckpt_file_names) == 0:
-                raise Exception(f"downstream_model_dir \"{downstream_model_dir}\" is not valid")
-            selected_fname = ckpt_file_names[-1]
-            min_val_loss = os.path.split(selected_fname)[-1].replace(".ckpt", "").split("=")[-1].split("-")[0]
-            try:
-                for ckpt_file_name in ckpt_file_names:
-                    val_loss = os.path.split(ckpt_file_name)[-1].replace(".ckpt", "").split("=")[-1].split("-")[0]
-                    if float(val_loss) < float(min_val_loss):
-                        selected_fname = ckpt_file_name
-                        min_val_loss = val_loss
-            except:
-                raise Exception(f"the ckpt file name of downstream_model_directory \"{downstream_model_dir}\" is not valid")
-            self.downstream_model_checkpoint_fpath = selected_fname
-        else:
-            raise Exception("Either downstream_model_dir or downstream_model_checkpoint_fpath must be entered.")
-        print(f"downstream_model_checkpoint_fpath: {self.downstream_model_checkpoint_fpath}")
+    def __post_init__(self):
+        if self.downstream_model_file is None:
+            ckpt_files = files(Path(self.downstream_model_path) / "*.ckpt")
+            ckpt_files = sorted([x for x in ckpt_files if "temp" not in str(x) and "tmp" not in str(x)], key=str)
+            assert len(ckpt_files) > 0, f"No checkpoint file in {self.downstream_model_path}"
+            self.downstream_model_file = ckpt_files[-1].name
+            print(f"downstream_model_file: {self.downstream_model_file}")
+
+    def save_working_config(self) -> Path:
+        config_file = make_dir(self.downstream_model_path) / self.working_config_file
+        config_file.write_text(self.to_json(ensure_ascii=False, indent=2, default=str))
+        return config_file
