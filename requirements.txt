@@ -4,6 +4,5 @@ dataclasses-json
 lightning
 transformers
 Korpora
-flask
-flask_ngrok
-flask_cors
+Flask
+Flask-Cors
