@@ -103,7 +103,7 @@ class ClassificationDeployArguments(DataClassJsonMixin):
         default="beomi/kcbert-base",
         metadata={"help": "name/path of the pretrained model"}
     )
-    downstream_model_path: str | None = field(
+    downstream_model_path: str | Path | None = field(
         default=None,
         metadata={"help": "output model directory path"}
     )
@@ -119,11 +119,13 @@ class ClassificationDeployArguments(DataClassJsonMixin):
 
     def __post_init__(self):
         if self.downstream_model_file is None:
-            ckpt_files = files(Path(self.downstream_model_path) / "*.ckpt")
+            self.downstream_model_path = Path(self.downstream_model_path)
+            assert self.downstream_model_path.exists() and self.downstream_model_path.is_dir(), \
+                f"downstream_model_path is not a directory: {self.downstream_model_path}"
+            ckpt_files = files(self.downstream_model_path / "*.ckpt")
             ckpt_files = sorted([x for x in ckpt_files if "temp" not in str(x) and "tmp" not in str(x)], key=str)
             assert len(ckpt_files) > 0, f"No checkpoint file in {self.downstream_model_path}"
             self.downstream_model_file = ckpt_files[-1].name
-            print(f"downstream_model_file: {self.downstream_model_file}")
 
     def save_working_config(self) -> Path:
         config_file = make_dir(self.downstream_model_path) / self.working_config_file
