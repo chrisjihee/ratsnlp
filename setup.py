@@ -9,13 +9,13 @@ def requirements():
 
 setuptools.setup(
     name="ratsnlp",
-    version="1.0.52",
+    version="2023.03.21",
     license='MIT',
-    author="ratsgo",
-    author_email="ratsgo@naver.com",
+    author="ratsgo, chrisjihee",
+    author_email="ratsgo@naver.com, chrisjihee@naver.com",
     description="tools for Natural Language Processing",
     long_description=open('README.md', encoding='utf-8').read(),
-    url="https://github.com/ratsgo/ratsnlp",
+    url="https://github.com/chrisjihee/ratsnlp",
     packages=setuptools.find_packages(),
     include_package_data=True,
     package_data={
