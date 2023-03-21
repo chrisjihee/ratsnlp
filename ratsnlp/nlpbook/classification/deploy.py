@@ -1,12 +1,13 @@
+import tempfile
+
 from flask import Flask, request, jsonify, render_template
 
 
-def get_web_service_app(inference_fn, is_colab=True):
-
+def get_web_service_app(inference_fn, ngrok_home=tempfile.gettempdir(), is_notebook=True):
     app = Flask(__name__, template_folder='')
-    if is_colab:
+    if is_notebook:
         from flask_ngrok import run_with_ngrok
-        run_with_ngrok(app)
+        run_with_ngrok(app, ngrok_home=ngrok_home)
     else:
         from flask_cors import CORS
         CORS(app)
