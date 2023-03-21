@@ -1,49 +1,114 @@
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import ClassVar
 
+import pandas as pd
 from dataclasses_json import DataClassJsonMixin
 
-from chrisbase.io import make_dir, files
+from chrisbase.io import files, make_parent_dir, out_hr, out_table
+from chrisbase.util import to_dataframe
+from chrislab.common.util import BaseProjectEnv, GpuProjectEnv
 
 
 @dataclass
-class ClassificationTrainArguments(DataClassJsonMixin):
-    working_config_file: str | None = field(
-        default=None,
-        metadata={"help": "downstream config filename"}
+class ClassificationArguments(DataClassJsonMixin):
+    env_classes: ClassVar = {
+        "BaseProjectEnv": BaseProjectEnv,
+        "GpuProjectEnv": GpuProjectEnv,
+    }
+
+    @classmethod
+    def env_class(cls, env_type: str) -> BaseProjectEnv | GpuProjectEnv:
+        return cls.env_classes[env_type]
+
+    def env_data(self) -> GpuProjectEnv | BaseProjectEnv:
+        if isinstance(self.env, (GpuProjectEnv, BaseProjectEnv)):
+            return self.env
+        else:
+            env_type = self.env["env_type"]
+            env_class = ClassificationArguments.env_class(env_type)
+            return env_class.from_dict(self.env)
+
+    def env_dict(self) -> dict:
+        if isinstance(self.env, DataClassJsonMixin):
+            return self.env.to_dict()
+        else:
+            return self.env
+
+    def __post_init__(self):
+        self.env = self.env_data()
+        self.working_config_file = self.env.running_file.with_suffix('.json').name
+        self.downstream_model_home = Path(self.downstream_model_home)
+
+    env: GpuProjectEnv | BaseProjectEnv | dict = field(
+        metadata={"help": "current project environment (GpuProjectEnv)"}
     )
-    pretrained_model_path: str | None = field(
+    pretrained_model_path: Path | str | None = field(
         default="beomi/kcbert-base",
-        metadata={"help": "name/path of the pretrained model"}
+        metadata={"help": "name/path of pretrained model"}
     )
-    downstream_model_path: str | None = field(
+    downstream_model_home: Path | str | None = field(
         default=None,
-        metadata={"help": "output model directory path"}
+        metadata={"help": "root directory of output model and working config"}
     )
     downstream_model_file: str | None = field(
         default=None,
-        metadata={"help": "output model filename format"}
-    )
-    downstream_data_home: str | None = field(
-        default="/content/Korpora",
-        metadata={"help": "root of the downstream data"}
-    )
-    downstream_data_name: str | None = field(
-        default=None,
-        metadata={"help": "name of the downstream data"}
+        metadata={"help": "filename or filename format of output model"}
     )
     downstream_task_name: str = field(
         default="document-classification",
-        metadata={"help": "name of the downstream task"}
+        metadata={"help": "name of downstream task"}
     )
     max_seq_length: int = field(
         default=128,
         metadata={"help": "The maximum total input sequence length after tokenization. "
                           "Sequences longer than this will be truncated, sequences shorter will be padded."}
     )
+    working_config_file: str | None = field(
+        init=False,
+        metadata={"help": "filename of current config"}
+    )
+
+    def save_working_config(self, to: Path | str = None) -> Path:
+        self.env = self.env_dict()
+        config_file = make_parent_dir(to) if to \
+            else make_parent_dir(self.downstream_model_home / self.working_config_file)
+        config_file.write_text(self.to_json(default=str, ensure_ascii=False, indent=2))
+        return config_file
+
+    def as_dataframe(self):
+        columns = [self.__class__.__name__, "value"]
+        return pd.concat([
+            to_dataframe(data_prefix="env", raw=self.env, columns=columns),
+            to_dataframe(data_exclude="env", raw=self, columns=columns),
+        ]).reset_index(drop=True)
+
+    def print_dataframe(self):
+        out_hr(c='-')
+        out_table(self.as_dataframe())
+        out_hr(c='-')
+        return self
+
+
+@dataclass
+class ClassificationTrainArguments(ClassificationArguments):
+    def __post_init__(self):
+        super().__post_init__()
+        if not self.save_top_k:
+            self.save_top_k = self.epochs
+        self.downstream_data_home = Path(self.downstream_data_home)
+
+    downstream_data_home: Path | str | None = field(
+        default="/content/Korpora",
+        metadata={"help": "root of downstream data"}
+    )
+    downstream_data_name: str | None = field(
+        default=None,
+        metadata={"help": "name of downstream data"}
+    )
     save_top_k: int = field(
-        default=1,
+        default=None,
         metadata={"help": "save top k model checkpoints"}
     )
     monitor: str = field(
@@ -71,7 +136,7 @@ class ClassificationTrainArguments(DataClassJsonMixin):
         metadata={"help": "learning rate"}
     )
     epochs: int = field(
-        default=3,
+        default=1,
         metadata={"help": "max epochs"}
     )
     batch_size: int = field(
@@ -87,47 +152,15 @@ class ClassificationTrainArguments(DataClassJsonMixin):
         metadata={"help": "enable train on floating point 16"}
     )
 
-    def save_working_config(self) -> Path:
-        config_file = make_dir(self.downstream_model_path) / self.working_config_file
-        config_file.write_text(self.to_json(ensure_ascii=False, indent=2, default=str))
-        return config_file
-
 
 @dataclass
-class ClassificationDeployArguments(DataClassJsonMixin):
-    working_config_file: str | None = field(
-        default=None,
-        metadata={"help": "downstream config filename"}
-    )
-    pretrained_model_path: str | None = field(
-        default="beomi/kcbert-base",
-        metadata={"help": "name/path of the pretrained model"}
-    )
-    downstream_model_path: str | Path | None = field(
-        default=None,
-        metadata={"help": "output model directory path"}
-    )
-    downstream_model_file: str | None = field(
-        default=None,
-        metadata={"help": "output model filename"}
-    )
-    max_seq_length: int = field(
-        default=128,
-        metadata={"help": "The maximum total input sequence length after tokenization. "
-                          "Sequences longer than this will be truncated, sequences shorter will be padded."}
-    )
-
+class ClassificationDeployArguments(ClassificationArguments):
     def __post_init__(self):
-        if self.downstream_model_file is None:
-            self.downstream_model_path = Path(self.downstream_model_path)
-            assert self.downstream_model_path.exists() and self.downstream_model_path.is_dir(), \
-                f"downstream_model_path is not a directory: {self.downstream_model_path}"
-            ckpt_files = files(self.downstream_model_path / "*.ckpt")
+        super().__post_init__()
+        if not self.downstream_model_file:
+            assert self.downstream_model_home.exists() and self.downstream_model_home.is_dir(), \
+                f"downstream_model_path is not a directory: {self.downstream_model_home}"
+            ckpt_files = files(self.downstream_model_home / "*.ckpt")
             ckpt_files = sorted([x for x in ckpt_files if "temp" not in str(x) and "tmp" not in str(x)], key=str)
-            assert len(ckpt_files) > 0, f"No checkpoint file in {self.downstream_model_path}"
+            assert len(ckpt_files) > 0, f"No checkpoint file in {self.downstream_model_home}"
             self.downstream_model_file = ckpt_files[-1].name
-
-    def save_working_config(self) -> Path:
-        config_file = make_dir(self.downstream_model_path) / self.working_config_file
-        config_file.write_text(self.to_json(ensure_ascii=False, indent=2, default=str))
-        return config_file
