@@ -3,7 +3,7 @@ from torch.optim.lr_scheduler import ExponentialLR
 
 from ratsnlp.nlpbook.generation.arguments import GenerationTrainArguments
 from transformers import PreTrainedModel
-from transformers.optimization import AdamW
+from transformers.optimization import Adafactor
 
 
 class GenerationTask(LightningModule):
@@ -17,7 +17,7 @@ class GenerationTask(LightningModule):
         self.args = args
 
     def configure_optimizers(self):
-        optimizer = AdamW(self.parameters(), lr=self.args.learning_rate)
+        optimizer = Adafactor(self.parameters(), lr=self.args.learning_rate, relative_step=False)
         scheduler = ExponentialLR(optimizer, gamma=0.9)
         return {
             'optimizer': optimizer,
